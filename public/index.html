@@ -4,50 +4,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Rover AI Voice App — a student-built text-to-speech and translation web app." />
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-  <title>Rover AI Voice App</title>
+  <title>Rover AI Voice App 🐶</title>
 </head>
 
-<body class="bg-gradient-to-br from-sky-200 to-teal-300 flex items-center justify-center h-screen">
-  <div class="bg-teal-600 shadow-lg rounded-lg p-6 max-w-md w-full">
-    <h1 class="text-3xl font-bold text-white text-center mb-4">
-      Rover AI Voice App
-    </h1>
+<body class="animated-bg min-h-screen flex flex-col items-center justify-center px-4 py-8">
 
-    <!-- Text Input -->
-    <textarea id="textInput" aria-label="Enter text for Rover to speak"
-      class="w-full h-32 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none placeholder-gray-400"
-      placeholder="Type what you want Rover to say..."></textarea>
+  <!-- Floating decorative blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
 
-    <!-- Language Selection -->
-    <div class="mt-4">
-      <label for="languageSelect" class="block text-sm font-medium text-white mb-2">Select Language</label>
-      <select id="languageSelect"
-        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
-        <option value="en">English</option>
-        <option value="es">Spanish</option>
-        <option value="fr">French</option>
-      </select>
+  <!-- Main Card -->
+  <main class="glass-card w-full max-w-lg p-7 sm:p-8 z-10">
+
+    <!-- Mascot + Title -->
+    <div class="flex flex-col items-center mb-6">
+      <div id="mascot" class="mascot text-6xl mb-2">🐶</div>
+      <h1 class="title text-4xl sm:text-5xl text-center">Rover AI Voice</h1>
+      <p class="subtitle text-center mt-1">Type it. Translate it. Hear it spoken aloud!</p>
     </div>
 
-    <!-- Voice Selection -->
-    <div class="mt-4">
-      <label for="voiceSelect" class="block text-sm font-medium text-white mb-2">Choose a Voice</label>
-      <select id="voiceSelect"
-        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
-        <option value="default">Default Voice</option>
-        <option value="male">Male Voice</option>
-        <option value="female">Female Voice</option>
-      </select>
+    <!-- Sound wave visualizer (animates while speaking) -->
+    <div id="waves" class="waves" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Text Input -->
+    <div class="flex items-center justify-between">
+      <label for="textInput" class="field-label">📝 Your message</label>
+      <button id="micButton" type="button" class="mic-btn" aria-label="Speak instead of typing">
+        🎤 <span class="mic-label">Speak</span>
+      </button>
+    </div>
+    <div class="textarea-wrap">
+      <textarea id="textInput" aria-label="Enter text for Rover to speak"
+        class="input-field h-28 resize-none"
+        placeholder="Type, or tap 🎤 Speak to talk..."></textarea>
+      <span id="charCount" class="char-count">0</span>
+    </div>
+
+    <!-- Quick sample phrase chips -->
+    <div class="chips mt-3">
+      <button type="button" class="chip">Hello, how are you?</button>
+      <button type="button" class="chip">Good morning!</button>
+      <button type="button" class="chip">Thank you very much</button>
+      <button type="button" class="chip">Have a nice day</button>
+    </div>
+
+    <!-- Language + Voice grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+      <div>
+        <label for="languageSelect" class="field-label">🌍 Translate to</label>
+        <select id="languageSelect" class="input-field"></select>
+      </div>
+      <div>
+        <label for="voiceSelect" class="field-label">🎙️ Voice</label>
+        <select id="voiceSelect" class="input-field">
+          <option value="default">Default Voice</option>
+        </select>
+      </div>
     </div>
 
     <!-- Play Button -->
-    <button id="playButton" type="button"
-      class="mt-6 w-full bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white transition duration-300">
-      🐶 Speak Now
+    <button id="playButton" type="button" class="play-btn mt-6 w-full">
+      <span class="btn-icon">🔊</span>
+      <span class="btn-text">Speak Now</span>
     </button>
-  </div>
+
+    <!-- Translation result panel -->
+    <div id="resultPanel" class="result-panel mt-5 hidden">
+      <div class="flex items-start justify-between gap-2">
+        <p class="result-label">🗣️ Rover says:</p>
+        <button id="copyButton" type="button" class="copy-btn" aria-label="Copy translation">📋 Copy</button>
+      </div>
+      <p id="resultText" class="result-text"></p>
+    </div>
+  </main>
+
+  <!-- Footer / portfolio context -->
+  <footer class="footer-note z-10 mt-6 text-center">
+    <p>Built with the Web Speech API, Google Translate &amp; Vercel.</p>
+    <p class="mt-1 opacity-80">Supports 15+ languages · Made with 💙 by a student</p>
+  </footer>
+
   <script src="script.js"></script>
 </body>
 

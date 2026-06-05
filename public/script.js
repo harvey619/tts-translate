@@ -2,6 +2,14 @@ const voiceSelect = document.querySelector('#voiceSelect');
 const playButton = document.querySelector('#playButton');
 const textInput = document.querySelector('textarea');
 const languageSelect = document.querySelector('#languageSelect');
+const mascot = document.querySelector('#mascot');
+const waves = document.querySelector('#waves');
+const resultPanel = document.querySelector('#resultPanel');
+const resultText = document.querySelector('#resultText');
+const micButton = document.querySelector('#micButton');
+const charCount = document.querySelector('#charCount');
+const copyButton = document.querySelector('#copyButton');
+const chips = document.querySelectorAll('.chip');
 
 // Array of supported languages with their ISO codes
 const languages = [
@@ -79,12 +87,27 @@ async function translateText(text, targetLang) {
   }
 }
 
+// Visual helpers: start/stop the "speaking" animation
+function setSpeaking(isSpeaking) {
+  mascot.classList.toggle('speaking', isSpeaking);
+  waves.classList.toggle('active', isSpeaking);
+}
+
+// Show the translated text in the result panel
+function showResult(text) {
+  resultText.textContent = text;
+  resultPanel.classList.remove('hidden');
+}
+
 // TTS
 function playText(text, voiceIndex) {
   const utterance = new SpeechSynthesisUtterance(text);
   if (voices[voiceIndex]) {
     utterance.voice = voices[voiceIndex];
   }
+  utterance.onstart = () => setSpeaking(true);
+  utterance.onend = () => setSpeaking(false);
+  utterance.onerror = () => setSpeaking(false);
   speechSynthesis.speak(utterance);
 }
 
@@ -99,14 +122,25 @@ async function handleButtonClick() {
     return;
   }
 
+  // Show loading state on the button
+  const btnText = playButton.querySelector('.btn-text');
+  const originalLabel = btnText ? btnText.textContent : '';
+  playButton.classList.add('loading');
+  if (btnText) btnText.textContent = 'Translating…';
+
   try {
     // Translate text
     const translatedText = await translateText(text, targetLang);
+    // Show it on screen
+    showResult(translatedText);
     // Play text
     playText(translatedText, selectedVoiceIndex);
   } catch (error) {
     console.error('Error during processing: ', error);
     alert('An error occurred');
+  } finally {
+    playButton.classList.remove('loading');
+    if (btnText) btnText.textContent = originalLabel;
   }
 }
 
@@ -116,3 +150,85 @@ playButton.addEventListener('touchend', (event) => {
   event.preventDefault(); // Prevent default behavior
   handleButtonClick();
 });
+
+// ---------- Live character counter ----------
+function updateCharCount() {
+  charCount.textContent = textInput.value.length;
+}
+textInput.addEventListener('input', updateCharCount);
+updateCharCount();
+
+// ---------- Sample phrase chips ----------
+chips.forEach((chip) => {
+  chip.addEventListener('click', () => {
+    textInput.value = chip.textContent;
+    updateCharCount();
+    textInput.focus();
+  });
+});
+
+// ---------- Copy translation ----------
+copyButton.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(resultText.textContent);
+    copyButton.classList.add('copied');
+    copyButton.textContent = '✅ Copied';
+    setTimeout(() => {
+      copyButton.classList.remove('copied');
+      copyButton.textContent = '📋 Copy';
+    }, 1500);
+  } catch (err) {
+    console.error('Copy failed: ', err);
+  }
+});
+
+// ---------- Voice input (speech-to-text) ----------
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isListening = false;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.interimResults = true;
+  recognition.continuous = false;
+
+  recognition.addEventListener('result', (event) => {
+    const transcript = Array.from(event.results)
+      .map((result) => result[0].transcript)
+      .join('');
+    textInput.value = transcript;
+    updateCharCount();
+  });
+
+  recognition.addEventListener('end', () => {
+    isListening = false;
+    micButton.classList.remove('listening');
+    micButton.querySelector('.mic-label').textContent = 'Speak';
+  });
+
+  recognition.addEventListener('error', () => {
+    isListening = false;
+    micButton.classList.remove('listening');
+    micButton.querySelector('.mic-label').textContent = 'Speak';
+  });
+
+  micButton.addEventListener('click', () => {
+    if (isListening) {
+      recognition.stop();
+      return;
+    }
+    // Users speak in their own language; translation handles the target language
+    recognition.lang = 'en-US';
+    try {
+      recognition.start();
+      isListening = true;
+      micButton.classList.add('listening');
+      micButton.querySelector('.mic-label').textContent = 'Listening…';
+    } catch (err) {
+      console.error('Could not start voice input: ', err);
+    }
+  });
+} else {
+  // Browser doesn't support speech recognition — hide the mic button
+  micButton.style.display = 'none';
+}
